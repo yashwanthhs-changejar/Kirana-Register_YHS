@@ -46,7 +46,7 @@ public class TransactionController {
         } catch (Exception error) {
             return new ResponseEntity<>(error.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
         }
-    }en
+    }
 
     @GetMapping("/something")
     public String getSomething(){
