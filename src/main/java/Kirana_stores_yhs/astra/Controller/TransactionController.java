@@ -10,6 +10,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
+import java.text.MessageFormat;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
@@ -104,16 +105,22 @@ public ResponseEntity<?> saveTransaction(@RequestBody TransactionRegister transa
             return new ResponseEntity<>("Transaction not found", HttpStatus.NOT_FOUND);
         }
     }
+//    @GetMapping("/id")
+//    public ResponseEntity<TransactionRegister> getTransactionById(@RequestParam Long id) {
+//        TransactionRegister transaction = transactionService.getTransactionById(id);
+//        if (transaction != null) {
+//            return ResponseEntity.ok(transaction);
+//        } else {
+//            return ResponseEntity.notFound().build();
+//        }
+//    }
+@GetMapping ("/id/{id}")
+public ResponseEntity<List<TransactionRegister>> getTransactionsById(@PathVariable("id") String id) {
+        System.out.println(MessageFormat.format("id :: {0}",id));
+    List<TransactionRegister> lis = transactionService.getTransactionsById(id);
+    return ResponseEntity.ok(lis);
 
-    public ResponseEntity<TransactionRegister> getTransactionById(@RequestParam Integer id) {
-        TransactionRegister transaction = transactionService.getTransactionById(id);
-        if (transaction != null) {
-            return ResponseEntity.ok(transaction);
-        } else {
-            return ResponseEntity.notFound().build();
-        }
-    }
-
+}
 
     @GetMapping("/transactions")
     public List<TransactionRegister> getAllTransactions() {
@@ -146,7 +153,7 @@ public ResponseEntity<?> saveTransaction(@RequestBody TransactionRegister transa
     }
 
     @DeleteMapping("/delete/{id}")
-    public void deleteCustomer(@PathVariable Long id) {
+    public void deleteCustomer(@PathVariable("id") String id) {
         transactionService.deleteTransaction(id);
     }
 }

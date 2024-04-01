@@ -101,10 +101,7 @@ import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -173,16 +170,14 @@ public class TransactionService {
     }
 
 
-    public void deleteTransaction(Long id) {
-        transactionRepository.deleteById(String.valueOf(id));
+    public void deleteTransaction(String id) {
+        transactionRepository.deleteById(id);
     }
-    public TransactionRegister getTransactionById(Integer id) {
-        // Use findById method from repository
-        Optional<TransactionRegister> optionalTransaction = transactionRepository.findById(String.valueOf(id));
+    public List<TransactionRegister> getTransactionsById(String id) {
+        Optional<TransactionRegister> transaction = transactionRepository.findById(id);
+        return transaction.map(Collections::singletonList).orElse(Collections.emptyList());
+    }
 
-        // Check if the optional contains a value, and return it if present
-        return optionalTransaction.orElse(null);
-    }
 
 
     public List<TransactionRegister> getAllTransactionsById(Long Id) {
