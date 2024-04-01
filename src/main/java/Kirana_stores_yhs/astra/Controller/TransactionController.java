@@ -1,10 +1,8 @@
 package Kirana_stores_yhs.astra.Controller;
 
-import Kirana_stores_yhs.astra.Entity.RateExchange;
 import Kirana_stores_yhs.astra.Entity.TransactionRegister;
 import Kirana_stores_yhs.astra.Repository.TransactionRepository;
 import Kirana_stores_yhs.astra.Services.RateConversionService;
-import Kirana_stores_yhs.astra.Services.RateResponse;
 import Kirana_stores_yhs.astra.Services.TransactionService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -16,19 +14,26 @@ import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 @RestController
 @RequestMapping(path = "/kiranaRegisterYHS")
 
 public class TransactionController {
 
-    @Autowired
-    private TransactionService transactionService;
-    @Autowired
-    private TransactionRepository transactionRepository;
+
+    private final TransactionService transactionService;
+
+    private final TransactionRepository transactionRepository;
+
+    private final RateConversionService rateConversionService;
 
     @Autowired
-    private RateResponse rateResponse;
+    public TransactionController(TransactionService transactionService, TransactionRepository transactionRepository, RateConversionService rateConversionService) {
+        this.transactionService = transactionService;
+        this.transactionRepository = transactionRepository;
+        this.rateConversionService = rateConversionService;
+    }
 
     @PostMapping("/getAllTransactions")
     public List<TransactionRegister> getTransactionByDate(@RequestParam("date") String date){
@@ -38,35 +43,87 @@ public class TransactionController {
         System.out.println("Date given" + localDate);
         return transactionService.getAllTransactionsByDate(localDate);
     }
-    @PostMapping("/save")
-    public ResponseEntity<?> saveCustomer(@RequestBody TransactionRegister customer) {
-        try {
-            TransactionRegister savedCustomer = transactionRepository.save(customer);
-            return new ResponseEntity<>(savedCustomer, HttpStatus.OK);
-        } catch (Exception error) {
-            return new ResponseEntity<>(error.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+//    @PostMapping("/save")
+//    public ResponseEntity<?> saveTransaction(@RequestBody TransactionRegister customer) {
+//        try {
+//            TransactionRegister savedCustomer = transactionRepository.save(customer);
+//            return new ResponseEntity<>(savedCustomer, HttpStatus.OK);
+//        } catch (Exception error) {
+//            return new ResponseEntity<>(error.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+//        }
+//    }
+@PostMapping("/save")
+public ResponseEntity<?> saveTransaction(@RequestBody TransactionRegister transactionRegister) {
+    try {
+        // Retrieve conversion rates
+        double conversionRate = rateConversionService.getConversionRate(
+                transactionRegister.getPaymentCurrency(),
+                transactionRegister.getConversionCurrency()
+        );
+
+        // Perform currency conversion
+        double paymentAmount = transactionRegister.getPaymentAmount();
+        double convertedAmount = paymentAmount * conversionRate;
+        transactionRegister.setConvertedAmount(convertedAmount);
+
+        // Set other properties
+        transactionRegister.setDate(LocalDate.now()); // Assuming date should be set to current date
+
+        // Save transaction to repository
+        TransactionRegister savedTransaction = transactionRepository.save(transactionRegister);
+        return new ResponseEntity<>(savedTransaction, HttpStatus.OK);
+    } catch (Exception error) {
+        return new ResponseEntity<>(error.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+}
+
+
+    @GetMapping("/changeRates/{id}")
+    public ResponseEntity<String> changeRates(@PathVariable String id) {
+        Optional<TransactionRegister> optionalTransaction = transactionRepository.findById(id);
+        if (optionalTransaction.isPresent()) {
+            TransactionRegister transaction = optionalTransaction.get();
+            double paymentAmount = transaction.getPaymentAmount();
+            String paymentCurrency = transaction.getPaymentCurrency();
+            String conversionCurrency = transaction.getConversionCurrency();
+            double convertedAmount = transaction.getConvertedAmount();
+
+            if (Double.toString(paymentAmount) != null) {
+                // Convert payment amount to conversion currency and update converted amount
+                double conversionRate = rateConversionService.getConversionRate(paymentCurrency, conversionCurrency);
+                double amount = paymentAmount;
+                double updatedConvertedAmount = amount * conversionRate;
+                transaction.setConvertedAmount(updatedConvertedAmount);
+            } else {
+                return new ResponseEntity<>("Payment amount is null", HttpStatus.BAD_REQUEST);
+            }
+
+            transactionRepository.save(transaction);
+            return new ResponseEntity<>("Rates changed successfully", HttpStatus.OK);
+        } else {
+            return new ResponseEntity<>("Transaction not found", HttpStatus.NOT_FOUND);
         }
     }
 
-    @GetMapping("/something")
-    public String getSomething(){
-        return "Something";
+    public ResponseEntity<TransactionRegister> getTransactionById(@RequestParam Integer id) {
+        TransactionRegister transaction = transactionService.getTransactionById(id);
+        if (transaction != null) {
+            return ResponseEntity.ok(transaction);
+        } else {
+            return ResponseEntity.notFound().build();
+        }
     }
-    @GetMapping("/{id}")
-    public ResponseEntity<TransactionRegister>getTransactionById(@PathVariable("id") Long id){
-        var transaction = transactionService.getAllTransactionsById(id);
-        return ResponseEntity.ok((TransactionRegister) transaction);
-    }
+
 
     @GetMapping("/transactions")
     public List<TransactionRegister> getAllTransactions() {
         return transactionService.getAllTransactions();
     }
 
-    @GetMapping("/RateExchange")
-    public List<RateExchange> getRateForCurrency(@PathVariable("currency") String currency){
-        return rateResponse.getRateForCurrency(currency);
-    }
+//    @GetMapping("/RateExchange")
+//    public List<RateExchange> getRateForCurrency(@PathVariable("currency") String currency){
+//        return rateResponse.getRateForCurrency(currency);
+//    }
 
     @GetMapping("/name/{name}")
     public ResponseEntity<TransactionRegister> getTransactionByName(@PathVariable("name") String name) {

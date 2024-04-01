@@ -1,16 +1,17 @@
 package Kirana_stores_yhs.astra.Entity;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
+@Getter
+@Setter
 @Document(collection = "TransactionRegister")
 public class TransactionRegister {
     @Id
@@ -18,8 +19,10 @@ public class TransactionRegister {
 
     private String name;
     private String description;
-    private String credit_amount;
-    private String debit_amount;
+    private double paymentAmount;
+    private String paymentCurrency;
+    private String conversionCurrency;
+    private double convertedAmount;
 
     private LocalDate date;
 }
