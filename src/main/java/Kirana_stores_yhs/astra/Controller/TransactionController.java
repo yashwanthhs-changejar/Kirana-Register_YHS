@@ -7,6 +7,7 @@ import Kirana_stores_yhs.astra.Services.TransactionService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
@@ -115,6 +116,7 @@ public ResponseEntity<?> saveTransaction(@RequestBody TransactionRegister transa
 //        }
 //    }
 @GetMapping ("/id/{id}")
+@PreAuthorize("hasAuthority(ROLE_USER)")
 public ResponseEntity<List<TransactionRegister>> getTransactionsById(@PathVariable("id") String id) {
         System.out.println(MessageFormat.format("id :: {0}",id));
     List<TransactionRegister> lis = transactionService.getTransactionsById(id);
@@ -123,6 +125,7 @@ public ResponseEntity<List<TransactionRegister>> getTransactionsById(@PathVariab
 }
 
     @GetMapping("/transactions")
+    @PreAuthorize("hasAuthority(ROLE_ADMIN)")
     public List<TransactionRegister> getAllTransactions() {
         return transactionService.getAllTransactions();
     }
@@ -133,6 +136,7 @@ public ResponseEntity<List<TransactionRegister>> getTransactionsById(@PathVariab
 //    }
 
     @GetMapping("/name/{name}")
+    @PreAuthorize("hasAuthority(ROLE_USER)")
     public ResponseEntity<TransactionRegister> getTransactionByName(@PathVariable("name") String name) {
         TransactionRegister transaction = transactionService.getTransactionByName(name);
         if (transaction != null) {
