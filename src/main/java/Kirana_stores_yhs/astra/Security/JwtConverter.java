@@ -1,15 +1,15 @@
 package Kirana_stores_yhs.astra.Security;
 
-import org.springframework.boot.autoconfigure.security.oauth2.resource.OAuth2ResourceServerProperties;
+import Kirana_stores_yhs.astra.Security.JwtConverterProperties;
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.security.authentication.AbstractAuthenticationToken;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.jwt.JwtClaimNames;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.security.oauth2.server.resource.authentication.JwtGrantedAuthoritiesConverter;
 import org.springframework.stereotype.Component;
-import org.springframework.security.oauth2.jwt.Jwt;
 
 import java.util.Collection;
 import java.util.Map;
@@ -28,20 +28,13 @@ public class JwtConverter implements Converter<Jwt, AbstractAuthenticationToken>
         this.properties = properties;
     }
 
-//    @Override
-//    public AbstractAuthenticationToken convert(Jwt jwt) {
-//        Collection<GrantedAuthority> authorities = Stream.concat(
-//                convert(jwt).stream(),
-//                extractResourceRoles(jwt).stream()).collect(Collectors.toSet());
-//        return new JwtAuthenticationToken(jwt, authorities, getPrincipalClaimName(jwt));
-//    }
-@Override
-public AbstractAuthenticationToken convert(Jwt jwt) {
-    Collection<GrantedAuthority> authorities = jwtGrantedAuthoritiesConverter.convert(jwt);
-    authorities.addAll(extractResourceRoles(jwt));
-    return new JwtAuthenticationToken(jwt, authorities, getPrincipalClaimName(jwt));
-}
-
+    @Override
+    public AbstractAuthenticationToken convert(Jwt jwt) {
+        Collection<GrantedAuthority> authorities = Stream.concat(
+                jwtGrantedAuthoritiesConverter.convert(jwt).stream(),
+                extractResourceRoles(jwt).stream()).collect(Collectors.toSet());
+        return new JwtAuthenticationToken(jwt, authorities, getPrincipalClaimName(jwt));
+    }
 
     private String getPrincipalClaimName(Jwt jwt) {
         String claimName = JwtClaimNames.SUB;
@@ -64,5 +57,6 @@ public AbstractAuthenticationToken convert(Jwt jwt) {
         return resourceRoles.stream()
                 .map(role -> new SimpleGrantedAuthority("ROLE_" + role))
                 .collect(Collectors.toSet());
+
     }
 }
