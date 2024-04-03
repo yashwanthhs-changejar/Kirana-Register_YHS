@@ -155,8 +155,7 @@ public ResponseEntity<List<TransactionRegister>> getTransactionsById(@PathVariab
         transactionService.updateTransaction(id, customerRegister);
 
     }
-
-    @DeleteMapping("/delete/{id}")
+    @DeleteMapping("/Delete/{id}")
     public void deleteCustomer(@PathVariable("id") String id) {
         transactionService.deleteTransaction(id);
     }
